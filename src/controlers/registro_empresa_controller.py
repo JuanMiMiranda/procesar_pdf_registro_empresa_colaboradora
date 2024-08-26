@@ -243,20 +243,20 @@ class RegistroEmpresaColaboradoraController:
 
         if operador is None:
             log_function("PDF no procesado, el campo operador no contiene información")
-            return
+            return False
 
         operador_dal = OperadorDAL(db)
         r_operador = operador_dal.get_record_by_nif(operador.nif_operador)
         if r_operador:
             log_function(f"El Operador {r_operador.nif_operador} - {r_operador.razon_social} ya existe en la BD. No se continuará con el proceso de importación de datos del PDF.")
-            return
+            return False
 
         try:
             operador_dal.insert(operador, representate_firma)
             log_function("Operador insertado exitosamente.")
         except Exception as e:
             log_function(f"Error al insertar el operador: {str(e)}")
-            return
+            return False
 
         usuario_operador_dal = Usuario_OperadorDAL(db)
         for representante in representantes:
@@ -282,6 +282,7 @@ class RegistroEmpresaColaboradoraController:
 
             except Exception as e:
                 log_function(f"Error al procesar el representante {representante.nif}: {str(e)}")
+        return True
 
     def completar_datos_representante_firma(self, representantes, representante_firma):
         """
@@ -303,7 +304,6 @@ class RegistroEmpresaColaboradoraController:
 
         return representante_firma
 
-        
 
     
 

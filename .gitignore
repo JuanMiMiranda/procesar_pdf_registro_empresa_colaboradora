@@ -1,3 +1,15 @@
 # Excluir la carpeta de configuración de Visual Studio Code
 .vscode/
 *.code-workspace
+# Ignorar el archivo main.spec
+main.spec
+
+# Ignorar todos los directorios __pycache__ y su contenido
+__pycache__/
+**/__pycache__/
+
+# Ignorar todo el contenido de la carpeta src/build
+src/build/
+
+# Ignorar todo el contenido de la carpeta src/build
+src/dist/
