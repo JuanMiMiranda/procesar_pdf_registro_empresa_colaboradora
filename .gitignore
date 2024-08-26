@@ -1,0 +1,3 @@
+# Excluir la carpeta de configuración de Visual Studio Code
+.vscode/
+*.code-workspace
