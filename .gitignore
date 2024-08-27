@@ -13,3 +13,7 @@ src/build/
 
 # Ignorar todo el contenido de la carpeta src/build
 src/dist/
+
+*.exe
+*.pdf
+*accdb
