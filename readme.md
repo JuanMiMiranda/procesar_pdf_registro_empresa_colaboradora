@@ -22,5 +22,3 @@ result = controladoraREC.procesar_pdf(pdf_path, db, escribirLog)
 
 def escribirLog(mensaje):
     print(mensaje)
-
-## Instalar
