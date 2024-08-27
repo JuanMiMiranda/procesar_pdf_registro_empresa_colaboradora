@@ -1,17 +1,3 @@
-# Procesador para extracción de datos Registro empresa colaboradora.
-
-
-## Generar el ejecutable 
-
-```sh
-pyinstaller --onefile --windowed app.py
-````
-
-## Utilizar a la funcionalidad sin utilizar el ejecutable. 
-Es posible utilizar este proyecto desde un script python. En el fichero test_script dentro del directorio src se detalla un ejemplo. Los pasos basicos serian los siguientes:
-
-
-```sh 
 import os
 
 from controlers.registro_empresa_controller import RegistroEmpresaColaboradoraController
@@ -21,11 +7,12 @@ def funcion_escribirLog(mensaje):
     print(mensaje)  # Aquí podrías escribir a un archivo o solo imprimir en consola
 
 # Ruta al archivo de base de datos
-db_path = 'ruta/a/tu/basededatos.accdb'  # Cambia esto por la ruta real del archivo de base de datos
-
+# db_path = 'ruta/a/tu/basededatos.accdb'  # Cambia esto por la ruta real del archivo de base de datos
+db_path = r'C:\Users\JuanMi\Desktop\BD_UNICO_DATOS.accdb'  # Cambia esto por la ruta real del archivo de base de datos
 
 # Ruta al archivo PDF
-pdf_path = 'ruta/a/tu/documento.pdf'  # Cambia esto por la ruta real del archivo PDF
+# pdf_path = 'ruta/a/tu/documento.pdf'  # Cambia esto por la ruta real del archivo PDF
+pdf_path = r'E:\OneDrive\DATOS\99 - SETELECO\TAREAS SETELECO\04_Tarea_UNICODatos_NDA\Tarea_UNICODatos_NDA\ELANTA_Lyntia_Formulario_Registro_Operadora_UNICO_DATOS_v3 firmado 3.pdf'  # Cambia esto por la ruta real del archivo PDF
 
 # Verificar que las rutas existan antes de proceder
 if not os.path.exists(db_path):
@@ -50,5 +37,3 @@ if result:
     print("El proceso del PDF fue exitoso.")
 else:
     print("El proceso del PDF falló.")
-
-````
