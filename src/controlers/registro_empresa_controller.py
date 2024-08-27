@@ -53,79 +53,7 @@ class RegistroEmpresaColaboradoraController:
         
         return all_fields
     
-    """
-    def crear_representantes_from_dict(self, datos):
-       
-        representantes = []
-        for i in range(1, 9):  # Asumimos que hay hasta 9 representantes
-            nombre_key = f"NOMBRE Y APELLIDOS_{i}" if i > 1 else "NOMBRE Y APELLIDOS"
-            dni_key = f"DNI_{i}" if i > 1 else "DNI"
-            cargo_key = f"CARGO_{i}" if i > 1 else "CARGO"
-            telefono_key = f"TELÉFONO DE CONTACTO_{i}" if i > 1 else "TELÉFONO DE CONTACTO"
-            correo_key = f"CORREO ELECTRÓNICO_{i}" if i > 1 else "CORREO ELECTRÓNICO"
-            extension_key = f"Extensión_{i}" if i > 1 else "Extensión"
-
-            # Obtener los valores del diccionario
-            nombre_y_apellidos = datos.get(nombre_key)
-            dni = datos.get(dni_key)
-            cargo = datos.get(cargo_key)
-            telefono = datos.get(telefono_key)
-            correo_electronico = datos.get(correo_key)
-            extension = datos.get(extension_key) # TODO Como tratamos al extensión.
-           
-            # Crear el objeto Representante solo si 'nombre' y 'dni' están presentes
-            if nombre_y_apellidos and dni:
-               nombre, apellido1, apellido2 = NombreApellidosParser(nombre_y_apellidos).parse()
-               representante = Usuario_Operador(
-                id=None,  # Asumimos que el ID se asignará posteriormente
-                nombre=nombre,
-                apellido1=apellido1,
-                apellido2=apellido2,
-                nif=dni,
-                email=correo_electronico or '',
-                telefono=telefono or ''
-                )
-               representantes.append(representante)
-
-        return representantes
     
-    
-    def crear_representante_firma_from_dict(self, datos):
-       
-        # Definir las claves para la posición 9
-        nombre_key = "NOMBRE Y APELLIDOS_9"
-        dni_key = "DNI_9"
-        cargo_key = "CARGO_9"
-        telefono_key = "TELÉFONO DE CONTACTO_9"
-        correo_key = "CORREO ELECTRÓNICO_9"
-        extension_key = "Extensión_9"
-
-        # Obtener los valores del diccionario
-        nombre_y_apellidos = datos.get(nombre_key)
-        dni = datos.get(dni_key)
-        cargo = datos.get(cargo_key)
-        telefono = datos.get(telefono_key)
-        correo_electronico = datos.get(correo_key)
-        extension = datos.get(extension_key)  # TODO: Considerar cómo tratar la extensión si es relevante
-
-        # Crear el objeto Representante solo si 'nombre' y 'dni' están presentes
-        if nombre_y_apellidos and dni:
-            nombre, apellido1, apellido2 = NombreApellidosParser(nombre_y_apellidos).parse()
-            representante = Usuario_Operador(
-                id=None,  # Asumimos que el ID se asignará posteriormente
-                nombre=nombre,
-                apellido1=apellido1,
-                apellido2=apellido2,
-                nif=dni,
-                email=correo_electronico or '',
-                telefono=telefono or ''
-            )
-            return representante
-
-        return None  # Retorna None si no se encuentra el representante en la posición 9
-    
-    """
-
     def crear_operador_from_dict(self, datos):
       
         nif_operador = datos.get('CIF')
