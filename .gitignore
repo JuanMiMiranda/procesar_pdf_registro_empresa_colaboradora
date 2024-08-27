@@ -16,4 +16,6 @@ src/dist/
 
 *.exe
 *.pdf
-*accdb
+*.accdb
+*.rar
+*.zip

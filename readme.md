@@ -1,17 +1,40 @@
-# Procesador para extracción de datos Registro empresa colaboradora.
+# Procesador para extracción de datos Registro empresa colaboradora
 
+## Flujo de Trabajo
 
-## Generar el ejecutable 
+1. **Extracción de Datos:**
+   - Se extraen los datos del PDF y se genera un diccionario con la información contenida en el documento.
+   - A partir de este diccionario, se crean objetos `Operador` y `Representantes`.
+   - Se considera representante legal como el firmante. Dado que falta información sobre el firmante, se completa la información de contacto de la empresa utilizando la información introducida al inicio por los representantes (relacionando por DNI).
+   - Si el operador extraído no es correcto (es decir, si falta información crítica en el PDF), se registra un mensaje de error y el proceso se detiene.
 
-```sh
-pyinstaller --onefile --windowed app.py
-````
+2. **Validación e Inserción del Operador:**
+   - El método verifica si el operador ya existe en la base de datos a través de su NIF.
+   - Si el operador ya está presente, se registra un mensaje indicando que no se continuará con la importación de datos y el proceso termina.
+   - Si el operador no está en la base de datos, se inserta en la tabla `Tabla_Operadores` junto con la información del representante legal.
 
-## Utilizar a la funcionalidad sin utilizar el ejecutable. 
+3. **Validación e Inserción de los Representantes:**
+   - Cada representante en la lista se procesa individualmente:
+     - Se verifica si ya existe en la `Tabla_Usuarios_UNICODatos`.
+     - Si no existe, se inserta.
+     - Si ya existe, se verifica si está relacionado con el operador.
+     - Si la relación entre el representante y el operador no existe, se genera esta relación en la tabla `Tabla_Usuarios_Operadores`.
+
+**Consideraciones:**
+
+- Los nombres y apellidos de los representantes en el PDF se proporcionan en un único campo. La separación de estos en nombre y apellidos se realiza aplicando cierta lógica. Sin embargo, este método puede no ser completamente preciso, ya que identificar si un nombre o apellido es compuesto resulta complicado de automatizar mediante programación. Por este motivo es recomendable siempre revisar estos campos tras el procesado.
+
+- Para los datos del representante legal, se utilizan los del firmante del documento. Sin embargo, no se disponen de datos como el correo electrónico o el teléfono de contacto. En esos casos, si estos datos están presentes en la información de alguno de los 8 representantes posibles en el documento, se toman de ahí para completar la información faltante del operador.
+
+- Los campos `Estado`, `Cob_Fija`, `Cob_FWA`, `Cob_Movil`, y los datos del grupo operador no se proporcionan en el formulario PDF, por lo que actualmente no se completan. Si lo prefieres, podemos definir valores predeterminados para estos campos, o configurar la aplicación para que solicite los valores específicos al procesar cada PDF preguntando al usuario.
+
+- Para los campos `telefono`, `DNI` y `CIF` se realiza una normalización para quitar cualquier carácter como puntos, guiones, etc.
+
+## Utilizar a la funcionalidad sin utilizar el ejecutable
+
 Es posible utilizar este proyecto desde un script python. En el fichero test_script dentro del directorio src se detalla un ejemplo. Los pasos basicos serian los siguientes:
 
-
-```sh 
+```sh
 import os
 
 from controlers.registro_empresa_controller import RegistroEmpresaColaboradoraController
@@ -51,4 +74,10 @@ if result:
 else:
     print("El proceso del PDF falló.")
 
+````
+
+## Generar el ejecutable
+
+```sh
+pyinstaller --onefile --windowed app.py
 ````
