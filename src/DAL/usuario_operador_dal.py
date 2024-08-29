@@ -173,5 +173,53 @@ class Usuario_OperadorDAL:
             self.db.connection.rollback()
         finally:
             cursor.close()
+
+
+    def update_usuario(self, usuario_operador):
+        cursor = self.db.get_cursor()
+        try:
+            # Consulta de actualización
+            query = '''
+            UPDATE Tabla_Usuarios_UNICODatos
+            SET
+                Nombre = ?,
+                Apellido1 = ?,
+                Apellido2 = ?,
+                [e-mail] = ?,
+                [Teléfono] = ?
+            WHERE
+                NIF = ?
+            '''
+            # Ejecutar la consulta con los valores del usuario_operador
+            cursor.execute(query, (
+                usuario_operador.nombre,
+                usuario_operador.apellido1,
+                usuario_operador.apellido2,
+                usuario_operador.email,
+                usuario_operador.telefono,
+                usuario_operador.nif  # Condición para identificar el usuario a actualizar
+            ))
+
+            # Confirmar la transacción
+            self.db.commit()
+            print("Usuario operador actualizado exitosamente.")
+
+            # Recuperar el ID del registro actualizado
+            cursor.execute('''
+            SELECT ID FROM Tabla_Usuarios_UNICODatos WHERE NIF = ?
+            ''', (usuario_operador.nif,))
+            usuario_operador.id = cursor.fetchone()[0]
+            
+            # Retornar True para indicar que la actualización fue exitosa
+            return True
+                
+        except Exception as e:
+            # En caso de error, deshacer la transacción
+            self.db.rollback()
+            print(f"An error occurred while updating the usuario operador: {str(e)}")
+            return False
+                
+        finally:
+            cursor.close()
     
   

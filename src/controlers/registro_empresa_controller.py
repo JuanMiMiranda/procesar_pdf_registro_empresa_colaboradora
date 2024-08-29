@@ -1,5 +1,8 @@
+from typing import List
 import fitz  # PyMuPDF
 import os
+from models.ResultadoProcesamiento import ResultadoProcesamiento
+from models.enum import PDFProcessingStatus
 from models.usuario_operador_model import Usuario_Operador
 from models.operador_model import Operador
 from helpers.NombreApellidosParser import NombreApellidosParser
@@ -161,30 +164,35 @@ class RegistroEmpresaColaboradoraController:
     def procesar_pdf(self, pdf_path, db, log_function):
         """
         Procesa un único PDF, inserta el operador y los representantes en la base de datos.
+        # :return: Una instancia de ResultadoProcesamiento que contiene:
+        #          - operador: Instancia del operador procesado del PDF o None si falta la información.
+        #          - representantes: Lista de representantes procesados del PDF o None si falla.
+        #          - representante_firma: Instancia del representante que firma, extraída del PDF o None si falla.
+        #          - pdf_processing_status: Un valor de PDFProcessingStatus que indica el estado final del procesamiento.
         """
         # Obtener los campos del PDF
         dic_campos_completados_pdf = self.get_dict_from_PDF(pdf_path)
         operador = self.crear_operador_from_dict(dic_campos_completados_pdf)
         representantes = self.crear_representantes_from_dict(dic_campos_completados_pdf)
-        representate_firma = self.crear_representante_firma_from_dict(dic_campos_completados_pdf)
-        representate_firma = self.completar_datos_representante_firma(representantes, representate_firma)
+        representante_firma = self.crear_representante_firma_from_dict(dic_campos_completados_pdf)
+        representante_firma = self.completar_datos_representante_firma(representantes, representante_firma)
 
         if operador is None:
-            log_function("PDF no procesado, el campo operador no contiene información")
-            return False
+            log_function(PDFProcessingStatus.MISSING_OPERATOR_INFO.value)
+            return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.MISSING_OPERATOR_INFO)
 
         operador_dal = OperadorDAL(db)
         r_operador = operador_dal.get_record_by_nif(operador.nif_operador)
         if r_operador:
-            log_function(f"El Operador {r_operador.nif_operador} - {r_operador.razon_social} ya existe en la BD. No se continuará con el proceso de importación de datos del PDF.")
-            return False
+            log_function(f"{PDFProcessingStatus.OPERATOR_EXISTS.value}: {r_operador.nif_operador} - {r_operador.razon_social}.")
+            return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.OPERATOR_EXISTS)
 
         try:
-            operador_dal.insert(operador, representate_firma)
-            log_function("Operador insertado exitosamente.")
+            operador_dal.insert(operador, representante_firma)
+            log_function(PDFProcessingStatus.SUCCESS.value)
         except Exception as e:
-            log_function(f"Error al insertar el operador: {str(e)}")
-            return False
+            log_function(f"{PDFProcessingStatus.INSERTION_ERROR.value}: {str(e)}")
+            return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.INSERTION_ERROR)
 
         usuario_operador_dal = Usuario_OperadorDAL(db)
         for representante in representantes:
@@ -203,14 +211,18 @@ class RegistroEmpresaColaboradoraController:
                 representante_con_info_operadoras = usuario_operador_dal.get_usuario_con_relacion_de_operadoras(representante)
                 operadora_encontrada = [o for o in representante_con_info_operadoras.operadoras if o.nif_operador == operador.nif_operador]
                 if operadora_encontrada:
-                    log_function(f"El usuario {representante_con_info_operadoras.nombre_completo} ya esta dado de alta como representante de la Operadora")
+                    log_function(f"El usuario {representante_con_info_operadoras.nombre_completo} ya está dado de alta como representante de la Operadora")
                 else:
-                    log_function(f"El usuario {representante_con_info_operadoras.nombre_completo} No se encontró como representante de la Operadora. Generamos la relación.")
+                    log_function(f"El usuario {representante_con_info_operadoras.nombre_completo} no se encontró como representante de la Operadora. Generamos la relación.")
                     usuario_operador_dal.add_usuario_relacion_con_operadora(representante, operador)
 
             except Exception as e:
-                log_function(f"Error al procesar el representante {representante.nif}: {str(e)}")
-        return True
+                log_function(f"{PDFProcessingStatus.REPRESENTATIVE_PROCESSING_ERROR.value} {representante.nif}: {str(e)}")
+                return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.REPRESENTATIVE_PROCESSING_ERROR)
+            
+        return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.SUCCESS)
+
+
 
     def completar_datos_representante_firma(self, representantes, representante_firma):
         """
@@ -231,6 +243,57 @@ class RegistroEmpresaColaboradoraController:
                 break  # Una vez encontrado, no necesitamos seguir buscando
 
         return representante_firma
+    
+
+    def actualizar_datos_operador(self, 
+                                  operador: Operador, 
+                                  representantes: List[Usuario_Operador], 
+                                  representante_legal: Usuario_Operador, 
+                                  db, 
+                                  log) -> bool:
+        """
+        Actualiza los datos del operador, representantes y representante firma en la base de datos.
+
+        Parámetros:
+        - operador: La instancia del operador cuyos datos deben ser actualizados.
+        - representantes: Lista de representantes cuyos datos deben ser actualizados.
+        - representante_legal: El representante que firma, cuyos datos deben ser actualizados.
+        - db: Conexión a la base de datos.
+        - log: Logger para registrar la actividad.
+
+        Retorna:
+        - bool: True si la actualización fue exitosa, False si ocurrió un error.
+        """
+        try:
+            log("Iniciando la actualización de datos del operador.")
+            operador_dal = OperadorDAL(db)
+            ##operador: Operador = operador_dal.get_record_by_nif(operador.nif_operador) # Lectura para obtener el id del actual.
+            r_operador = operador_dal.update_operador(operador, representante_legal)
+            log("Datos del operador actualizados correctamente.")
+        
+            usuario_operador_dal = Usuario_OperadorDAL(db)
+            log("Iniciando la actualización de datos de los representantes.")
+            for representante in representantes:
+                log(f"Iniciando la actualización de datos de representante {representante.nombre_completo}")
+                usuario_operador_dal.update_usuario(representante) 
+                log(f"Datos de representante { representante.nombre_completo } actualizados correctamente.")
+
+                representante_con_info_operadoras = usuario_operador_dal.get_usuario_con_relacion_de_operadoras(representante)
+                operadora_encontrada = [o for o in representante_con_info_operadoras.operadoras if o.nif_operador == operador.nif_operador]
+                if operadora_encontrada:
+                    log(f"El usuario {representante_con_info_operadoras.nombre_completo} ya está dado de alta como representante de la Operadora")
+                else:
+                    log(f"El usuario {representante_con_info_operadoras.nombre_completo} no se encontró como representante de la Operadora. Generamos la relación.")
+                    usuario_operador_dal.add_usuario_relacion_con_operadora(representante, operador)
+
+            return True
+
+        except Exception as e:
+            log.error(f"Error al actualizar los datos: {str(e)}")
+            return False
+    
+
+
 
 
     

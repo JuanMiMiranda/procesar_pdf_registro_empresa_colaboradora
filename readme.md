@@ -10,8 +10,8 @@
 
 2. **Validación e Inserción del Operador:**
    - El método verifica si el operador ya existe en la base de datos a través de su NIF.
-   - Si el operador ya está presente, se registra un mensaje indicando que no se continuará con la importación de datos y el proceso termina.
    - Si el operador no está en la base de datos, se inserta en la tabla `Tabla_Operadores` junto con la información del representante legal.
+   - Si el operador ya existe en la base de datos, se muestra un mensaje informando al usuario de que ya existe un operador con el CIF indicado. El usuario tiene la opción de continuar o cancelar. Si el usuario opta por continuar, se actualizarán los datos del operador en la base de datos si alguno de ellos difiere de la información actual. Si el usuario elige cancelar, la importación de datos se detiene y el proceso finaliza.
 
 3. **Validación e Inserción de los Representantes:**
    - Cada representante en la lista se procesa individualmente:
@@ -26,7 +26,7 @@
 
 - Para los datos del representante legal, se utilizan los del firmante del documento. Sin embargo, no se disponen de datos como el correo electrónico o el teléfono de contacto. En esos casos, si estos datos están presentes en la información de alguno de los 8 representantes posibles en el documento, se toman de ahí para completar la información faltante del operador.
 
-- Los campos `Estado`, `Cob_Fija`, `Cob_FWA`, `Cob_Movil`, y los datos del grupo operador no se proporcionan en el formulario PDF, por lo que actualmente no se completan. Si lo prefieres, podemos definir valores predeterminados para estos campos, o configurar la aplicación para que solicite los valores específicos al procesar cada PDF preguntando al usuario.
+- Los campos `Estado`, `Cob_Fija`, `Cob_FWA`, `Cob_Movil`, y los datos del grupo operador no se proporcionan en el formulario PDF, por lo que actualmente no se completan.
 
 - Para los campos `telefono`, `DNI` y `CIF` se realiza una normalización para quitar cualquier carácter como puntos, guiones, etc.
 

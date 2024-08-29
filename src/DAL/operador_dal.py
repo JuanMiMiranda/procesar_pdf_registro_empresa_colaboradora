@@ -1,5 +1,6 @@
 # import pyodbc
 from models.operador_model import Operador
+from models.usuario_operador_model import Usuario_Operador
 
 class OperadorDAL:
     def __init__(self, db):
@@ -98,6 +99,63 @@ class OperadorDAL:
         
         except Exception as e:
             print(f"An error occurred while inserting the operator: {str(e)}")
+            self.db.connection.rollback()  # Revertir la transacción en caso de error
+        
+        finally:
+            cursor.close()
+
+
+    def update_operador(self, operador: Operador, representate_legal: Usuario_Operador) -> bool:
+        """
+        Actualiza los datos del operador en la base de datos.
+
+        Parámetros:
+        - operador: La instancia del operador con los datos a actualizar.
+        - representate_legal: La instancia del representante legal con los datos a actualizar.
+
+        Retorna:
+        - bool: True si la actualización fue exitosa, False si ocurrió un error.
+        """
+        cursor = self.db.get_cursor()
+        try:
+            query = '''
+            UPDATE Tabla_Operadores
+            SET
+                RAZON_SOCIAL = ?,
+                COB_FWA = ?,
+                COB_MOVIL = ?,
+                NIF_GRUPO_OPERADOR = ?,
+                GRUPO_OPERADOR = ?,
+                NIF_REPLEGAL = ?,
+                NOMBRE_REPLEGAL = ?,
+                NIF_NOTIFICACION = ?,
+                REPRESENTANTE_NOTIFICACION = ?,
+                EMAIL_NOTIFICACION = ?
+            WHERE
+                NIF_OPERADOR = ?
+            '''
+            
+            # Ejecutar la consulta con los valores del operador
+            cursor.execute(query, (
+                operador.razon_social,
+                operador.cob_fwa,
+                operador.cob_movil,
+                operador.nif_grupo_operador,
+                operador.grupo_operador,
+                representate_legal.nif,
+                representate_legal.nombre_completo,
+                operador.nif_notificacion,
+                operador.representante_notificacion,
+                representate_legal.email,
+                operador.nif_operador  # Condición para la actualización
+            ))
+
+            # Confirmar la transacción
+            self.db.commit()
+            print("Operador actualizado exitosamente.")
+        
+        except Exception as e:
+            print(f"An error occurred while updating the operator: {str(e)}")
             self.db.connection.rollback()  # Revertir la transacción en caso de error
         
         finally:

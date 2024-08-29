@@ -8,13 +8,16 @@ from DAL.database import Database
 from tkinter import messagebox
 import os
 
+from models.ResultadoProcesamiento import ResultadoProcesamiento
+from models.enum import PDFProcessingStatus
+
 
 
 
 class App:
     # Obtener el directorio actual
     current_directory = os.getcwd()
-    version = '1.0.1'
+    version = '1.0.2'
 
     # Formar la ruta completa
     db_default_path = os.path.join(current_directory, 'BD_UNICO_DATOS.accdb')
@@ -44,10 +47,26 @@ class App:
         )
         self.load_button.pack(side=tk.LEFT, padx=5)
 
+
+        # Botón para obtener datos del PDF
+        self.get_pdf_data_button = tk.Button(
+            button_frame,
+            text="2. Obtener datos PDF´s",
+            command=self.get_pdf_data,
+            bg="#5a9bd3",        # Azul más oscuro
+            fg="white",         # Texto blanco
+            font=("Helvetica", 12),  # Tamaño de fuente
+            padx=15,            # Espacio adicional a los lados del texto
+            pady=5              # Espacio adicional arriba y abajo del texto
+        )
+        self.get_pdf_data_button.pack(side=tk.LEFT, padx=5)
+        self.get_pdf_data_button.config(state=tk.DISABLED)  # Deshabilitado inicialmente
+
+        
         # Botón para seleccionar DB Access
         self.load_bd_access_button = tk.Button(
             button_frame,
-            text="2. Seleccionar DB Access",
+            text="3. Seleccionar DB Access",
             command=self.change_db_access,
             bg="#abebe4",        # Azul
             fg="white",         # Texto blanco
@@ -57,11 +76,11 @@ class App:
         )
         self.load_bd_access_button.pack(side=tk.LEFT, padx=5)
         self.load_bd_access_button.config(state=tk.DISABLED)  # Deshabilitado inicialmente
-
-        # Botón para procesar los archivos PDF
+       
+        # Botón para Guardar los datos
         self.process_button = tk.Button(
             button_frame,
-            text="3. Procesar PDFs",
+            text="4. GUARDAR DATOS",
             command=self.process_pdfs,
             bg="#ffa322",        # Naranja
             fg="white",         # Texto blanco
@@ -72,12 +91,15 @@ class App:
         self.process_button.pack(side=tk.LEFT, padx=5)
         self.process_button.config(state=tk.DISABLED)  # Deshabilitado inicialmente
 
-        # Crear la tabla (Treeview)
-        self.tree = ttk.Treeview(root, columns=("PDF_NAME", "PDF_PATH", "ESTADO"), show="headings")
+        # Crear la tabla (Treeview) con una nueva columna para "Nombre Operadora"
+        self.tree = ttk.Treeview(root, columns=("PDF_NAME", "PDF_PATH", "ESTADO", "NOMBRE_OPERADORA"), show="headings")
         self.tree.heading("PDF_NAME", text="Nombre del PDF")
         self.tree.heading("PDF_PATH", text="Ruta del PDF")
+        self.tree.heading("NOMBRE_OPERADORA", text="Nombre Operadora")
         self.tree.heading("ESTADO", text="Estado Proceso")
         self.tree.pack(pady=10, fill=tk.BOTH, expand=True)
+        # Vincular evento de selección en la tabla
+        self.tree.bind("<<TreeviewSelect>>", self.on_tree_select)
 
         # Crear el label para los logs
         self.log_label = tk.Label(root, text="Log:")
@@ -95,6 +117,44 @@ class App:
         self.db_access_label = tk.Label(db_frame, text="BD Access: No seleccionada")
         self.db_access_label.pack(side=tk.LEFT, padx=5)
 
+        # Botón para editar el registro seleccionado
+        self.edit_button = tk.Button(
+            root,
+            text="Editar registro seleccionado",
+            command=self.edit_selected_record,
+            bg="#ff6347",        # Rojo
+            fg="white",         # Texto blanco
+            font=("Helvetica", 12),  # Tamaño de fuente
+            padx=15,            # Espacio adicional a los lados del texto
+            pady=5              # Espacio adicional arriba y abajo del texto
+        )
+        self.edit_button.pack(pady=5, anchor='e')  # Alineado a la derecha
+        self.edit_button.config(state=tk.DISABLED)  # Deshabilitado inicialmente
+
+    def on_tree_select(self, event):
+        # Obtener el item seleccionado
+        selected_item = self.tree.selection()
+        if selected_item:
+            # Obtener la información del registro seleccionado
+            item_data = self.tree.item(selected_item)
+            values = item_data['values']
+            print(f"Registro seleccionado: {values}")
+            self.edit_button.config(state=tk.NORMAL) # Habilitar boton de edición.
+    
+    def get_pdf_data(self):
+      
+    
+
+    def edit_selected_record(self):
+        selected_item = self.tree.selection()
+        if selected_item:
+            # Obtén la información del registro seleccionado
+            item_data = self.tree.item(selected_item)
+            print(f"Editar: {item_data}")
+            # Implementa la lógica para editar el registro
+        else:
+            print("No se ha seleccionado ningún registro.")
+
     def load_pdfs(self):
 
         # Abrir diálogo para seleccionar múltiples archivos PDF
@@ -109,7 +169,7 @@ class App:
                 self.tree.insert("", tk.END, values=(pdf_name, file_path, "SIN PROCESAR"))
 
             self.log("Archivos PDF cargados y mostrados en la tabla.")
-            self.load_bd_access_button.config(state=tk.NORMAL) # Habilitamos el siguiente botón
+            self.get_pdf_data_button.config(state=tk.NORMAL) # Habilitamos el siguiente botón
             self.load_button.config(state=tk.DISABLED)
 
 
@@ -125,7 +185,7 @@ class App:
  
 
     def process_pdfs(self):
-
+        root = tk.Tk()
         ###################################
         # 0º Validaciones e Instanciación DB. 
         ###################################
@@ -140,7 +200,6 @@ class App:
         # Verificar si no hay elementos
         if not children:
             self.log("No hay elementos en la lista para procesar.")
-            root = tk.Tk()
             root.withdraw()  # Ocultar la ventana principal
             messagebox.showwarning("Archivos PDF no encontrado", f"No hay elementos PDF en la lista para procesar.")
             root.destroy()  # Cerrar la ventana emergente
@@ -151,14 +210,46 @@ class App:
         ###################################
 
         for row in children:
+            new_estado = "Procesando..."
             pdf_path = self.tree.item(row, "values")[1]
             pdf_name = self.tree.item(row, "values")[0]
-            self.log(f"Procesado {pdf_name}")
+            self.log(f"Procesando {pdf_name}")
+            self.tree.item(row, values=(pdf_name, pdf_path, new_estado)) # Actualizar estado en la tabla.
             controladoraREC = RegistroEmpresaColaboradoraController(pdf_path)
-            result = controladoraREC.procesar_pdf(pdf_path, db, self.log)
-             # Actualizar el campo "ESTADO" basado en `result`
-            new_estado = "OK" if result else "ERROR"
-            self.tree.item(row, values=(pdf_name, pdf_path, new_estado))
+            result: ResultadoProcesamiento = controladoraREC.procesar_pdf(pdf_path, db, self.log)
+            if result.pdf_processing_status is PDFProcessingStatus.SUCCESS:
+                new_estado = "OK"
+            elif result.pdf_processing_status == PDFProcessingStatus.OPERATOR_EXISTS:
+                self.log("El operador ya existe. ¿Desea continuar con la actualización?")
+                root.withdraw()  # Oculta la ventana principal
+                cif = result.operador.nif_operador
+                mensaje = (
+                f"El operador con CIF {cif} ya está registrado en la base de datos. "
+                "Si decides continuar, actualizaremos los datos del operador con la información del PDF. "
+                "Si prefieres cancelar, no se procesará el PDF y los datos actuales del operador permanecerán sin cambios. "
+                "¿Deseas proceder con la actualización?"
+                )
+                respuesta = messagebox.askyesno("Confirmar Actualización", mensaje)
+                if respuesta:
+                    respuesta_actualizacion = controladoraREC.actualizar_datos_operador(result.operador, result.representantes, result.representante_firma, db, self.log)
+                    if respuesta_actualizacion:
+                        new_estado = "DATOS ACTUALIZADOS"
+                    else:
+                        new_estado = "ERROR AL ACTUALIZAR"
+                else:
+                    print("Proceso cancelado. Los datos del operador permanecerán sin cambios.")
+                    new_estado = "YA EXISTE. SIN CAMBIOS"
+            elif result.pdf_processing_status == PDFProcessingStatus.MISSING_OPERATOR_INFO:
+                self.log("No se pudo procesar el PDF porque falta información del operador.")
+                new_estado = "ERROR. FALTA INFO. OPERADOR"
+            elif result.pdf_processing_status == PDFProcessingStatus.INSERTION_ERROR:
+                self.log("Ocurrió un error al intentar insertar el operador en la base de datos.")
+                new_estado = "ERROR. INSERCIÓN EN BD"
+            elif result.pdf_processing_status == PDFProcessingStatus.REPRESENTATIVE_PROCESSING_ERROR:
+                self.log("Ocurrió un error al procesar uno de los representantes.")
+                new_estado = "ERROR. EN PROCESADO DE REPRESENTANTES"
+            
+            self.tree.item(row, values=(pdf_name, pdf_path, new_estado)) # Actualizar estado en la tabla.
 
 
     def log(self, message):
