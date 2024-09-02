@@ -79,5 +79,5 @@ else:
 ## Generar el ejecutable
 
 ```sh
-pyinstaller --onefile --windowed app.py
+pyinstaller --onefile --windowed main.py
 ````
