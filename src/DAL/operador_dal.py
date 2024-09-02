@@ -10,6 +10,7 @@ class OperadorDAL:
         return Operador(
             nif_operador=row.get('NIF_OPERADOR'),
             razon_social=row.get('RAZON_SOCIAL'),
+            cob_fija=row.get('COB_FIJA'),
             cob_fwa=row.get('COB_FWA'),
             cob_movil=row.get('COB_MOVIL'),
             nif_grupo_operador=row.get('NIF_GRUPO_OPERADOR'),
@@ -61,8 +62,10 @@ class OperadorDAL:
         try:
             query = '''
             INSERT INTO Tabla_Operadores (
+                ESTADO,
                 NIF_OPERADOR,
                 RAZON_SOCIAL,
+                COB_FIJA,
                 COB_FWA,
                 COB_MOVIL,
                 NIF_GRUPO_OPERADOR,
@@ -72,15 +75,17 @@ class OperadorDAL:
                 NIF_NOTIFICACION,
                 REPRESENTANTE_NOTIFICACION,
                 EMAIL_NOTIFICACION
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             '''
             
             # Ejecutar la consulta con los valores del operador
             cursor.execute(query, (
+                "ALTA",
                 operador.nif_operador,
                 operador.razon_social,
-                operador.cob_fwa,
-                operador.cob_movil,
+                "SI" if operador.cob_fija else "",
+                "SI" if operador.cob_fwa else "",
+                "SI" if operador.cob_movil else "",
                 operador.nif_grupo_operador,
                 operador.grupo_operador,
                 # operador.nif_replegal,
@@ -89,17 +94,20 @@ class OperadorDAL:
                 representate_legal.nombre_completo,
                 operador.nif_notificacion,
                 operador.representante_notificacion,
-                #operador.email_notificacion
-                representate_legal.email
+                operador.email_notificacion
+                #representate_legal.email
             ))
 
             # Confirmar la transacción
             self.db.commit()
             print("Operador insertado exitosamente.")
+            return True
         
         except Exception as e:
             print(f"An error occurred while inserting the operator: {str(e)}")
             self.db.connection.rollback()  # Revertir la transacción en caso de error
+            raise  # Vuelve a propagar la excepción para que pueda ser manejada en un nivel superior
+            return False
         
         finally:
             cursor.close()
@@ -121,7 +129,9 @@ class OperadorDAL:
             query = '''
             UPDATE Tabla_Operadores
             SET
+                ESTADO = ?,
                 RAZON_SOCIAL = ?,
+                COB_FIJA = ?,
                 COB_FWA = ?,
                 COB_MOVIL = ?,
                 NIF_GRUPO_OPERADOR = ?,
@@ -137,16 +147,18 @@ class OperadorDAL:
             
             # Ejecutar la consulta con los valores del operador
             cursor.execute(query, (
+                "ALTA",
                 operador.razon_social,
-                operador.cob_fwa,
-                operador.cob_movil,
+                "SI" if operador.cob_fija else "",
+                "SI" if operador.cob_fwa else "",
+                "SI" if operador.cob_movil else "",
                 operador.nif_grupo_operador,
                 operador.grupo_operador,
                 representate_legal.nif,
                 representate_legal.nombre_completo,
                 operador.nif_notificacion,
                 operador.representante_notificacion,
-                representate_legal.email,
+                operador.email_notificacion,
                 operador.nif_operador  # Condición para la actualización
             ))
 

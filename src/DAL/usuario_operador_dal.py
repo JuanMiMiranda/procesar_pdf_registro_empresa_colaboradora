@@ -8,13 +8,13 @@ class Usuario_OperadorDAL:
 
     def map_row_to_usuario_operador(self, row):
         return Usuario_Operador(
-            id=row.get('Id'),
-            nombre=row.get('Nombre'),
-            apellido1=row.get('Apellido1'),
-            apellido2=row.get('Apellido2'),
-            nif=row.get('NIF'),
-            email=row.get('e-mail'),
-            telefono=row.get('Telefono'),
+             id=row.get('Id'),
+            nombre=row.get('Nombre') or "",
+            apellido1=row.get('Apellido1') or "",
+            apellido2=row.get('Apellido2') or "",
+            nif=row.get('NIF') or "",
+            email=row.get('e-mail') or "",
+            telefono=row.get('Telefono') or ""
         )
     
     def map_row_to_operadoras(self, usuario_operador, row_dict):
@@ -215,7 +215,7 @@ class Usuario_OperadorDAL:
                 
         except Exception as e:
             # En caso de error, deshacer la transacción
-            self.db.rollback()
+            self.db.connection.rollback()
             print(f"An error occurred while updating the usuario operador: {str(e)}")
             return False
                 

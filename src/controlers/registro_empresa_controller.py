@@ -61,6 +61,7 @@ class RegistroEmpresaColaboradoraController:
       
         nif_operador = datos.get('CIF')
         razon_social = datos.get('NOMBRE DE LA EMPRESA')
+        cob_fija = None  # Valor no proporcionado en los datos
         cob_fwa = None  # Valor no proporcionado en los datos
         cob_movil = None  # Valor no proporcionado en los datos
         nif_grupo_operador = None  # Valor no proporcionado en los datos
@@ -79,6 +80,7 @@ class RegistroEmpresaColaboradoraController:
         operador = Operador(
             nif_operador=nif_operador,
             razon_social=razon_social,
+            cob_fija=cob_fija,
             cob_fwa=cob_fwa,
             cob_movil=cob_movil,
             nif_grupo_operador=nif_grupo_operador,
@@ -161,9 +163,9 @@ class RegistroEmpresaColaboradoraController:
         return self.crear_representante_desde_dict(datos, 9)
 
 
-    def procesar_pdf(self, pdf_path, db, log_function):
+    def get_pdf_data(self, pdf_path, db, log_function):
         """
-        Procesa un único PDF, inserta el operador y los representantes en la base de datos.
+        Procesa un único PDF para obtener los datos almacenados en el mismo. Este método no realiza inserción en BD.
         # :return: Una instancia de ResultadoProcesamiento que contiene:
         #          - operador: Instancia del operador procesado del PDF o None si falta la información.
         #          - representantes: Lista de representantes procesados del PDF o None si falla.
@@ -184,9 +186,19 @@ class RegistroEmpresaColaboradoraController:
         operador_dal = OperadorDAL(db)
         r_operador = operador_dal.get_record_by_nif(operador.nif_operador)
         if r_operador:
-            log_function(f"{PDFProcessingStatus.OPERATOR_EXISTS.value}: {r_operador.nif_operador} - {r_operador.razon_social}.")
+            log_function(f"{PDFProcessingStatus.OPERATOR_EXISTS.value}: {r_operador.nif_operador} - {r_operador.razon_social}. Si continua se actualizaran los datos del operador.")
             return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.OPERATOR_EXISTS)
+        return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.LOAD_PDF_OK)
 
+
+    def guardar_datos_registros_pdf(self, db, operador, representante_firma, representantes, log_function):
+
+        """
+        Guarda los datos de operador y rerpresentante en la BD indicada.
+        """
+
+
+        operador_dal = OperadorDAL(db)
         try:
             operador_dal.insert(operador, representante_firma)
             log_function(PDFProcessingStatus.SUCCESS.value)
@@ -223,7 +235,6 @@ class RegistroEmpresaColaboradoraController:
         return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.SUCCESS)
 
 
-
     def completar_datos_representante_firma(self, representantes, representante_firma):
         """
         Completa el campo email del representante firmante utilizando el dato del representante que comparte el mismo CIF.
@@ -252,12 +263,12 @@ class RegistroEmpresaColaboradoraController:
                                   db, 
                                   log) -> bool:
         """
-        Actualiza los datos del operador, representantes y representante firma en la base de datos.
+       Actualiza los datos del operador, representantes y representante legal en la base de datos.
 
         Parámetros:
-        - operador: La instancia del operador cuyos datos deben ser actualizados.
-        - representantes: Lista de representantes cuyos datos deben ser actualizados.
-        - representante_legal: El representante que firma, cuyos datos deben ser actualizados.
+        - operador: Instancia del operador cuyos datos se actualizarán.
+        - representantes: Lista de representantes cuyos datos se actualizarán.
+        - representante_legal: Representante legal que firma, cuyos datos se actualizarán.
         - db: Conexión a la base de datos.
         - log: Logger para registrar la actividad.
 
@@ -265,31 +276,38 @@ class RegistroEmpresaColaboradoraController:
         - bool: True si la actualización fue exitosa, False si ocurrió un error.
         """
         try:
-            log("Iniciando la actualización de datos del operador.")
             operador_dal = OperadorDAL(db)
-            ##operador: Operador = operador_dal.get_record_by_nif(operador.nif_operador) # Lectura para obtener el id del actual.
-            r_operador = operador_dal.update_operador(operador, representante_legal)
+            operador_dal.update_operador(operador, representante_legal)
             log("Datos del operador actualizados correctamente.")
-        
-            usuario_operador_dal = Usuario_OperadorDAL(db)
-            log("Iniciando la actualización de datos de los representantes.")
-            for representante in representantes:
-                log(f"Iniciando la actualización de datos de representante {representante.nombre_completo}")
-                usuario_operador_dal.update_usuario(representante) 
-                log(f"Datos de representante { representante.nombre_completo } actualizados correctamente.")
 
-                representante_con_info_operadoras = usuario_operador_dal.get_usuario_con_relacion_de_operadoras(representante)
-                operadora_encontrada = [o for o in representante_con_info_operadoras.operadoras if o.nif_operador == operador.nif_operador]
-                if operadora_encontrada:
-                    log(f"El usuario {representante_con_info_operadoras.nombre_completo} ya está dado de alta como representante de la Operadora")
+            usuario_operador_dal = Usuario_OperadorDAL(db)
+
+            for representante in representantes:
+                usuario = usuario_operador_dal.get_record_by_nif(representante.nif)
+
+                if usuario is None:
+                    r_representante = usuario_operador_dal.insert(representante)
+                    log(f"Representante {representante.nif} insertado exitosamente.")
                 else:
-                    log(f"El usuario {representante_con_info_operadoras.nombre_completo} no se encontró como representante de la Operadora. Generamos la relación.")
+                    r_representante = usuario_operador_dal.update_usuario(representante)
+                    log(f"Representante {usuario.nif} - {usuario.nombre_completo} ya existe. Se han actualizado sus datos.")
+
+                if not r_representante:
+                    log(f"No se pudo actualizar los datos del representante {representante.nombre_completo}.")
+                    continue
+
+                
+
+                representante_info = usuario_operador_dal.get_usuario_con_relacion_de_operadoras(representante)
+                if any(o.nif_operador == operador.nif_operador for o in representante_info.operadoras):
+                    log(f"El representante {representante_info.nombre_completo} ya está vinculado a la operadora {operador.nif_operador}.")
+                else:
                     usuario_operador_dal.add_usuario_relacion_con_operadora(representante, operador)
+                    log(f"Vinculación del representante {representante_info.nombre_completo} a la operadora {operador.nif_operador} realizada con éxito.")
 
             return True
-
         except Exception as e:
-            log.error(f"Error al actualizar los datos: {str(e)}")
+            log(f"Error al actualizar los datos: {str(e)}")
             return False
     
 
