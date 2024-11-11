@@ -9,7 +9,9 @@ class ResultadoProcesamiento:
                  operador: Operador, 
                  representantes: List[Usuario_Operador], 
                  representante_firma: Usuario_Operador, 
-                 pdf_processing_status: PDFProcessingStatus):
+                 pdf_processing_status: PDFProcessingStatus,
+                 aceptacion_condiciones_uso: bool = False,
+                 documento_firmado: bool = False):
         """
         Inicializa una instancia de ResultadoProcesamiento.
         
@@ -23,4 +25,6 @@ class ResultadoProcesamiento:
         self.representantes = representantes
         self.representante_firma = representante_firma
         self.pdf_processing_status = pdf_processing_status
+        self.aceptacion_condiciones_uso = aceptacion_condiciones_uso
+        self.documento_firmado = documento_firmado
     

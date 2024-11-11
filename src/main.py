@@ -20,7 +20,7 @@ import webbrowser
 class App:
     # Obtener el directorio actual
     current_directory = os.getcwd()
-    version = '1.1.1'
+    version = '1.2.1'
 
     # Formar la ruta completa
     db_default_path = os.path.join(current_directory, 'BD_UNICO_DATOS.accdb')
@@ -211,6 +211,8 @@ class App:
                 new_estado = Status.LECTURA_PDF_OK.value
             elif result.pdf_processing_status is PDFProcessingStatus.OPERATOR_EXISTS:
                 new_estado = Status.LECTURA_PDF_OK_OPERADOR_EXISTE.value
+            elif result.pdf_processing_status is PDFProcessingStatus.MISSING_SIGNATURE:
+                new_estado = Status.SIN_FIRMA.value
             elif result.pdf_processing_status is PDFProcessingStatus.MISSING_OPERATOR_INFO:
                 new_estado = Status.ERROR_PDF_NO_VALIDO.value
 
@@ -287,6 +289,20 @@ class App:
             operador: Operador = self.dic_datos_pdf[clave].operador
             representantes : List[Usuario_Operador] = self.dic_datos_pdf[clave].representantes
             representante_firma : Usuario_Operador = self.dic_datos_pdf[clave].representante_firma
+            aceptacion_condiciones_uso : bool = self.dic_datos_pdf[clave].aceptacion_condiciones_uso
+            documento_firmado : bool = self.dic_datos_pdf[clave].documento_firmado
+
+            if representante_firma is None or documento_firmado == False:
+                messagebox.showinfo("PDF sin firma o sin datos del representante de la empresa.", f"Del operador con CIF {nombre_operadora} No es posible actualizar o guardar los datos si el PDF no está firmado o NO se han proporcionado los datos del representante de la empresa.")
+                continue
+                # return 
+                
+            if aceptacion_condiciones_uso == False:
+                messagebox.showinfo("Aceptación de condiciones.", f"Del operador con CIF {nombre_operadora} No es posible actualizar o guardar los datos si en el PDF no se han aceptado las condiciones.")
+                continue
+                # return 
+
+
             # Actualización de datos.
             if "OPERADOR YA EXISTE" in estado_proceso:
                 self.log("El operador ya existe. ¿Desea continuar con la actualización?")

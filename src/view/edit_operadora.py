@@ -14,7 +14,7 @@ def editar_operador(root, operador, representante_firma, representantes):
     # Crear la nueva ventana
     edit_window = tk.Toplevel(root)
     edit_window.title("Editar Operador")
-    edit_window.geometry("1200x600")
+    edit_window.geometry("1200x700")
 
     # Crear el Notebook (con tabs)
     notebook = ttk.Notebook(edit_window)
@@ -38,25 +38,7 @@ def editar_operador(root, operador, representante_firma, representantes):
     razon_entry = tk.Entry(frame_tab1)
     razon_entry.grid(row=1, column=1, sticky="ew", pady=5, padx=5)
     razon_entry.insert(0, operador.razon_social)
-
-    # Campo "Cobertura Fija"
-    tk.Label(frame_tab1, text="Cobertura Fija:").grid(row=2, column=0, sticky="w", pady=5)
-    cob_fija_var = tk.BooleanVar(value=operador.cob_fija if operador.cob_fija is not None else False)
-    cob_fija_checkbutton = tk.Checkbutton(frame_tab1, variable=cob_fija_var)
-    cob_fija_checkbutton.grid(row=2, column=1, sticky="w", pady=5, padx=5)
-
-    # Campo "Cobertura FWA"
-    tk.Label(frame_tab1, text="Cobertura FWA:").grid(row=3, column=0, sticky="w", pady=5)
-    cob_fwa_var = tk.BooleanVar(value=operador.cob_fwa if operador.cob_fwa is not None else False)
-    cob_fwa_checkbutton = tk.Checkbutton(frame_tab1, variable=cob_fwa_var)
-    cob_fwa_checkbutton.grid(row=3, column=1, sticky="w", pady=5, padx=5)
-
-    # Campo "Cobertura Móvil"
-    tk.Label(frame_tab1, text="Cobertura Móvil:").grid(row=4, column=0, sticky="w", pady=5)
-    cob_movil_var = tk.BooleanVar(value=operador.cob_movil if operador.cob_movil is not None else False)
-    cob_movil_checkbutton = tk.Checkbutton(frame_tab1, variable=cob_movil_var)
-    cob_movil_checkbutton.grid(row=4, column=1, sticky="w", pady=5, padx=5)
-
+  
     # Campo "Grupo Operador"
     tk.Label(frame_tab1, text="Grupo Operador:").grid(row=5, column=0, sticky="w", pady=5)
     grupo_operador_entry = tk.Entry(frame_tab1)
@@ -71,43 +53,104 @@ def editar_operador(root, operador, representante_firma, representantes):
     email_value = operador.email_notificacion if operador.email_notificacion is not None else ""
     email_entry.insert(0, email_value)
 
-    # Línea divisoria
-    separator = ttk.Separator(frame_tab1, orient="horizontal")
-    separator.grid(row=7, column=0, columnspan=2, sticky="ew", pady=10)
 
-    # Etiqueta "Datos del firmante (Representante legal)"
-    tk.Label(frame_tab1, text="Datos del firmante (Representante Legal):").grid(row=8, column=0, sticky="w", pady=5, columnspan=2)
+    # LabelFrame para Infraestructura
+    infraestructura_frame = tk.LabelFrame(frame_tab1, text="Infraestructura", padx=10, pady=10)
+    infraestructura_frame.grid(row=7, column=0, sticky="w", padx=10, pady=10)
+
+    # Campos de Infraestructura
+    tk.Label(infraestructura_frame, text="Infraestructura Fija:").grid(row=0, column=0, sticky="w", pady=5)
+    cob_fija_var = tk.BooleanVar(value=operador.cob_fija if operador.cob_fija is not None else False)
+    cob_fija_checkbutton = tk.Checkbutton(infraestructura_frame, variable=cob_fija_var)
+    cob_fija_checkbutton.grid(row=0, column=1, sticky="w", pady=5, padx=5)
+
+    tk.Label(infraestructura_frame, text="Infraestructura FWA:").grid(row=1, column=0, sticky="w", pady=5)
+    cob_fwa_var = tk.BooleanVar(value=operador.cob_fwa if operador.cob_fwa is not None else False)
+    cob_fwa_checkbutton = tk.Checkbutton(infraestructura_frame, variable=cob_fwa_var)
+    cob_fwa_checkbutton.grid(row=1, column=1, sticky="w", pady=5, padx=5)
+
+    tk.Label(infraestructura_frame, text="Infraestructura Móvil:").grid(row=2, column=0, sticky="w", pady=5)
+    cob_movil_var = tk.BooleanVar(value=operador.cob_movil if operador.cob_movil is not None else False)
+    cob_movil_checkbutton = tk.Checkbutton(infraestructura_frame, variable=cob_movil_var)
+    cob_movil_checkbutton.grid(row=2, column=1, sticky="w", pady=5, padx=5)
+
+    # LabelFrame para Servicios
+    servicio_frame = tk.LabelFrame(frame_tab1, text="Servicios", padx=10, pady=10)
+    servicio_frame.grid(row=7, column=1, sticky="w", padx=10, pady=10)
+
+    # Campos de Servicio
+    tk.Label(servicio_frame, text="Servicio Fija:").grid(row=0, column=0, sticky="w", pady=5)
+    ser_fija_var = tk.BooleanVar(value=operador.servicio_fija if operador.servicio_fija is not None else False)
+    ser_fija_checkbutton = tk.Checkbutton(servicio_frame, variable=ser_fija_var)
+    ser_fija_checkbutton.grid(row=0, column=1, sticky="w", pady=5, padx=5)
+
+    tk.Label(servicio_frame, text="Servicio FWA:").grid(row=1, column=0, sticky="w", pady=5)
+    ser_fwa_var = tk.BooleanVar(value=operador.servicio_fwa if operador.servicio_fwa is not None else False)
+    ser_fwa_checkbutton = tk.Checkbutton(servicio_frame, variable=ser_fwa_var)
+    ser_fwa_checkbutton.grid(row=1, column=1, sticky="w", pady=5, padx=5)
+
+    tk.Label(servicio_frame, text="Servicio Móvil:").grid(row=2, column=0, sticky="w", pady=5)
+    ser_movil_var = tk.BooleanVar(value=operador.servicio_movil if operador.servicio_movil is not None else False)
+    ser_movil_checkbutton = tk.Checkbutton(servicio_frame, variable=ser_movil_var)
+    ser_movil_checkbutton.grid(row=2, column=1, sticky="w", pady=5, padx=5)
+
+    tk.Label(servicio_frame, text="Servicio Móvil Virtual:").grid(row=0, column=2, sticky="w", pady=5)
+    ser_movil_virtual_var = tk.BooleanVar(value=operador.servicio_movil_virtual if operador.servicio_movil_virtual is not None else False)
+    ser_movil_virtual_checkbutton = tk.Checkbutton(servicio_frame, variable=ser_movil_virtual_var)
+    ser_movil_virtual_checkbutton.grid(row=0, column=3, sticky="w", pady=5, padx=5)
+
+    tk.Label(servicio_frame, text="Otros:").grid(row=1, column=2, sticky="w", pady=5)
+    ser_otros_entry = tk.Entry(servicio_frame)
+    ser_otros_entry.grid(row=2, column=2, sticky="ew", pady=5, padx=5)
+    ser_otros_entry.insert(0, operador.servicio_otros if operador.servicio_otros is not None else "")
+
+
+    # LabelFrame para Datos del Firmante
+    firmante_frame = tk.LabelFrame(frame_tab1, text="Datos del firmante (Representante Legal)", padx=10, pady=10)
+    firmante_frame.grid(row=8, column=0, columnspan=2, sticky="ew", padx=10, pady=10)
+
+    # Mensaje de advertencia si el PDF no está firmado correctamente
+    if representante_firma is None:
+        tk.Label(
+            firmante_frame, 
+            text="¡ATENCIÓN! El PDF no está firmado correctamente. Por favor, verifica la firma.",
+            fg="red",
+            font=("Arial", 9)
+        ).grid(row=0, column=0, columnspan=2, sticky="e", pady=5)
 
     # Campos de entrada para los datos del firmante
-    tk.Label(frame_tab1, text="Nombre:").grid(row=9, column=0, sticky="w", pady=5)
-    nombre_firmante_entry = tk.Entry(frame_tab1)
-    nombre_firmante_entry.grid(row=9, column=1, sticky="ew", pady=5, padx=5)
-    nombre_firmante_entry.insert(0, representante_firma.nombre)
+    tk.Label(firmante_frame, text="Nombre:").grid(row=1, column=0, sticky="w", pady=5)
+    nombre_firmante_entry = tk.Entry(firmante_frame)
+    nombre_firmante_entry.grid(row=1, column=1, sticky="ew", pady=5, padx=5)
+    nombre_firmante_entry.insert(0, representante_firma.nombre if representante_firma is not None else "")
 
-    tk.Label(frame_tab1, text="Apellido 1:").grid(row=10, column=0, sticky="w", pady=5)
-    apellido1_firmante_entry = tk.Entry(frame_tab1)
-    apellido1_firmante_entry.grid(row=10, column=1, sticky="ew", pady=5, padx=5)
-    apellido1_firmante_entry.insert(0, representante_firma.apellido1)
+    tk.Label(firmante_frame, text="Apellido 1:").grid(row=2, column=0, sticky="w", pady=5)
+    apellido1_firmante_entry = tk.Entry(firmante_frame)
+    apellido1_firmante_entry.grid(row=2, column=1, sticky="ew", pady=5, padx=5)
+    apellido1_firmante_entry.insert(0, representante_firma.apellido1 if representante_firma is not None else "")
 
-    tk.Label(frame_tab1, text="Apellido 2:").grid(row=11, column=0, sticky="w", pady=5)
-    apellido2_firmante_entry = tk.Entry(frame_tab1)
-    apellido2_firmante_entry.grid(row=11, column=1, sticky="ew", pady=5, padx=5)
-    apellido2_firmante_entry.insert(0, representante_firma.apellido2)
+    tk.Label(firmante_frame, text="Apellido 2:").grid(row=3, column=0, sticky="w", pady=5)
+    apellido2_firmante_entry = tk.Entry(firmante_frame)
+    apellido2_firmante_entry.grid(row=3, column=1, sticky="ew", pady=5, padx=5)
+    apellido2_firmante_entry.insert(0, representante_firma.apellido2 if representante_firma is not None else "")
 
-    tk.Label(frame_tab1, text="NIF:").grid(row=12, column=0, sticky="w", pady=5)
-    nif_firmante_entry = tk.Entry(frame_tab1)
-    nif_firmante_entry.grid(row=12, column=1, sticky="ew", pady=5, padx=5)
-    nif_firmante_entry.insert(0, representante_firma.nif)
+    tk.Label(firmante_frame, text="NIF:").grid(row=4, column=0, sticky="w", pady=5)
+    nif_firmante_entry = tk.Entry(firmante_frame)
+    nif_firmante_entry.grid(row=4, column=1, sticky="ew", pady=5, padx=5)
+    nif_firmante_entry.insert(0, representante_firma.nif if representante_firma is not None else "")
 
-    tk.Label(frame_tab1, text="Email:").grid(row=13, column=0, sticky="w", pady=5)
-    email_firmante_entry = tk.Entry(frame_tab1)
-    email_firmante_entry.grid(row=13, column=1, sticky="ew", pady=5, padx=5)
-    email_firmante_entry.insert(0, representante_firma.email)
+    tk.Label(firmante_frame, text="Email:").grid(row=5, column=0, sticky="w", pady=5)
+    email_firmante_entry = tk.Entry(firmante_frame)
+    email_firmante_entry.grid(row=5, column=1, sticky="ew", pady=5, padx=5)
+    email_firmante_entry.insert(0, representante_firma.email if representante_firma is not None else "")
 
-    tk.Label(frame_tab1, text="Teléfono:").grid(row=14, column=0, sticky="w", pady=5)
-    telefono_firmante_entry = tk.Entry(frame_tab1)
-    telefono_firmante_entry.grid(row=14, column=1, sticky="ew", pady=5, padx=5)
-    telefono_firmante_entry.insert(0, representante_firma.telefono)
+    tk.Label(firmante_frame, text="Teléfono:").grid(row=6, column=0, sticky="w", pady=5)
+    telefono_firmante_entry = tk.Entry(firmante_frame)
+    telefono_firmante_entry.grid(row=6, column=1, sticky="ew", pady=5, padx=5)
+    telefono_firmante_entry.insert(0, representante_firma.telefono if representante_firma is not None else "")
+
+    # Configurar el grid del LabelFrame para que expanda al ocupar todo el ancho
+    firmante_frame.columnconfigure(1, weight=1)
 
     # Expande los campos de entrada cuando se redimensione la ventana
     frame_tab1.columnconfigure(1, weight=1)
@@ -202,13 +245,19 @@ def editar_operador(root, operador, representante_firma, representantes):
         operador.cob_movil = cob_movil_var.get()
         operador.grupo_operador = grupo_operador_entry.get()
         operador.email_notificacion = email_entry.get()
+        operador.servicio_fija = ser_fija_var.get()
+        operador.servicio_movil = ser_movil_var.get()
+        operador.servicio_fwa = ser_fwa_var.get()
+        operador.servicio_movil_virtual = ser_movil_virtual_var.get()
+        operador.servicio_otros = ser_otros_entry.get()
 
-        representante_firma.nombre = nombre_firmante_entry.get()
-        representante_firma.apellido1 = apellido1_firmante_entry.get()
-        representante_firma.apellido2 = apellido2_firmante_entry.get()
-        representante_firma.nif = nif_firmante_entry.get()
-        representante_firma.email = email_firmante_entry.get()
-        representante_firma.telefono = telefono_firmante_entry.get()
+        if representante_firma is not None:
+            representante_firma.nombre = nombre_firmante_entry.get()
+            representante_firma.apellido1 = apellido1_firmante_entry.get()
+            representante_firma.apellido2 = apellido2_firmante_entry.get()
+            representante_firma.nif = nif_firmante_entry.get()
+            representante_firma.email = email_firmante_entry.get()
+            representante_firma.telefono = telefono_firmante_entry.get()
 
         # Limpiar la lista de representantes actuales y llenar con los nuevos datos
         representantes.clear()

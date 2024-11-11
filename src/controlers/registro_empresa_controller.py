@@ -9,6 +9,9 @@ from helpers.NombreApellidosParser import NombreApellidosParser
 from DAL.operador_dal import OperadorDAL
 from DAL.usuario_operador_dal import Usuario_OperadorDAL
 
+from pyhanko.sign.validation import validate_pdf_signature
+from pyhanko.sign.fields import enumerate_sig_fields
+from pyhanko.pdf_utils.reader import PdfFileReader
 
 
 class RegistroEmpresaColaboradoraController:
@@ -43,9 +46,15 @@ class RegistroEmpresaColaboradoraController:
             if widgets:
                 for widget in widgets:
                     try:
+                        field_name = widget.field_name
                         if widget.field_type == fitz.PDF_WIDGET_TYPE_TEXT:
-                            field_name = widget.field_name
                             field_value = widget.field_value if hasattr(widget, 'field_value') else ''
+                        elif widget.field_type == fitz.PDF_WIDGET_TYPE_CHECKBOX:
+                            field_value = True if widget.field_value not in [0, ''] else False # Valor 0 o una cadena vacía ('') indica que la casilla no está marcada, y otros valores indican que sí lo está
+                        else:
+                            field_value = ''
+
+                        if field_name:
                             all_fields[field_name] = field_value
                     except Exception as e:
                         print(f"Error en el widget en {pdf_path}, página {page_num + 1}: {str(e)}")
@@ -61,9 +70,9 @@ class RegistroEmpresaColaboradoraController:
       
         nif_operador = datos.get('CIF')
         razon_social = datos.get('NOMBRE DE LA EMPRESA')
-        cob_fija = None  # Valor no proporcionado en los datos
-        cob_fwa = None  # Valor no proporcionado en los datos
-        cob_movil = None  # Valor no proporcionado en los datos
+        cob_fija = datos.get('InfraestructuraFija', None)
+        cob_fwa = datos.get('InfraestructuraFWA', None)
+        cob_movil = datos.get('InfraestructuraMovil', None)
         nif_grupo_operador = None  # Valor no proporcionado en los datos
         grupo_operador = None # Valor no proporcionado en los datos
         nif_replegal = None  # Valor no proporcionado en los datos
@@ -71,8 +80,12 @@ class RegistroEmpresaColaboradoraController:
         nif_notificacion = None  # Valor no proporcionado en los datos
         representante_notificacion = None  # Valor no proporcionado en los datos
         email_notificacion = datos.get('CORREO ELECTRÓNICO RRHH')
-
-
+        servicio_fija= datos.get('ServicioFijo', None)
+        servicio_movil= datos.get('ServicioMovil', None)
+        servicio_fwa= datos.get('ServicioFWA', None)
+        servicio_movil_virtual= datos.get('ServicioMovilVirtual', None)
+        servicio_otros= datos.get('Indicar Otros_2', None)
+    
         # Crear el objeto Operador solo si 'nif_operador' y 'razon_social' están presentes
         if not (nif_operador and razon_social):
             return None
@@ -89,7 +102,12 @@ class RegistroEmpresaColaboradoraController:
             nombre_replegal=nombre_replegal,
             nif_notificacion=nif_notificacion,
             representante_notificacion=representante_notificacion,
-            email_notificacion=email_notificacion
+            email_notificacion=email_notificacion,
+            servicio_fija=servicio_fija,
+            servicio_movil= servicio_movil,
+            servicio_fwa= servicio_fwa,
+            servicio_movil_virtual= servicio_movil_virtual,
+            servicio_otros=servicio_otros
         )
 
         return operador
@@ -178,17 +196,24 @@ class RegistroEmpresaColaboradoraController:
         representantes = self.crear_representantes_from_dict(dic_campos_completados_pdf)
         representante_firma = self.crear_representante_firma_from_dict(dic_campos_completados_pdf)
         representante_firma = self.completar_datos_representante_firma(representantes, representante_firma)
+        aceptacion_condiciones_uso = dic_campos_completados_pdf.get('Aceptación Condiciones', dic_campos_completados_pdf.get('Casilla de verificación1', False)) # En la versión 2 de los PDF la casilla de aceptación se llama de esta forma.
+        documento_firmado = self.verificar_firma_pdf(pdf_path)
+       
 
         if operador is None:
             log_function(PDFProcessingStatus.MISSING_OPERATOR_INFO.value)
-            return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.MISSING_OPERATOR_INFO)
+            return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.MISSING_OPERATOR_INFO, aceptacion_condiciones_uso, documento_firmado)
+        
+        if documento_firmado is False:
+            return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.MISSING_SIGNATURE, aceptacion_condiciones_uso, documento_firmado)
 
         operador_dal = OperadorDAL(db)
         r_operador = operador_dal.get_record_by_nif(operador.nif_operador)
         if r_operador:
             log_function(f"{PDFProcessingStatus.OPERATOR_EXISTS.value}: {r_operador.nif_operador} - {r_operador.razon_social}. Si continua se actualizaran los datos del operador.")
-            return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.OPERATOR_EXISTS)
-        return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.LOAD_PDF_OK)
+            return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.OPERATOR_EXISTS, aceptacion_condiciones_uso, documento_firmado)
+        
+        return ResultadoProcesamiento(operador, representantes, representante_firma, PDFProcessingStatus.LOAD_PDF_OK, aceptacion_condiciones_uso, documento_firmado)
 
 
     def guardar_datos_registros_pdf(self, db, operador, representante_firma, representantes, log_function):
@@ -259,7 +284,7 @@ class RegistroEmpresaColaboradoraController:
     def actualizar_datos_operador(self, 
                                   operador: Operador, 
                                   representantes: List[Usuario_Operador], 
-                                  representante_legal: Usuario_Operador, 
+                                  representante_legal: Usuario_Operador,
                                   db, 
                                   log) -> bool:
         """
@@ -309,9 +334,43 @@ class RegistroEmpresaColaboradoraController:
         except Exception as e:
             log(f"Error al actualizar los datos: {str(e)}")
             return False
-    
+        
 
+    def verificar_firma_pdf(self, pdf_path):
+        try:
+            with open(pdf_path, "rb") as pdf_file:
+                pdf_reader = PdfFileReader(pdf_file, strict=False)
 
+                # Verificar la existencia de AcroForm y Fields
+                acro_form = pdf_reader.root.get("/AcroForm")
+                if acro_form is not None:
+                    acro_form = acro_form.get_object()  # Resolver IndirectObject
+                    fields = acro_form.get("/Fields")
+                    if fields:
+                        for field in fields:
+                            field = field.get_object()  # Resolver cada campo
+                            if field.get("/FT") == "/Sig":  # Verificar si es campo de firma
+                                print(f"Firma encontrada en el archivo {os.path.basename(pdf_path)}. No se comprueba la validez de la firma. ")
+                                return True
+                                
+                                """
+                                sig_field_name = field.get("/T")
+                                
+                                signature_status = validate_pdf_signature(pdf_reader, field_name=sig_field_name)
+                                if signature_status is not None and signature_status.is_valid:
+                                    print(f"Firma válida encontrada en el archivo {os.path.basename(pdf_path)}.")
+                                    return True
+                                else:
+                                    print(f"Firma no válida en el archivo {os.path.basename(pdf_path)}.")
+                        print("No se detectaron firmas válidas en los campos del formulario PDF.")
+                        """
+                        print(f"No se detectaron firmas en el archivo {os.path.basename(pdf_path)}.")
+                        return False
+
+        except Exception as e:
+            print(f"Error al abrir o procesar el archivo PDF: {e}")
+            return False
+                        
 
 
     

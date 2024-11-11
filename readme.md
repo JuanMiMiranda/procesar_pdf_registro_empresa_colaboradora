@@ -1,5 +1,13 @@
 # Procesador para extracción de datos Registro empresa colaboradora
 
+## Historico de versiones
+
+| Fecha | Cambio | Versión |
+|----------|----------|----------|
+| 18/09/2024 | - Versión inicial, funciona con PDF de la versión 3 del PDF. <br> - Documento "Formulario_Registro_Operadora_UNICO_DATOS_v3.pdf"  |  1.1.1  |
+| 31/10/2024    | - Se añade soporte para la versión 4 del PDF. Con los añadidos de tipo de infraestructura y tipo de servicio. <br> - Documento "Formulario_Registro_Operadora_UNICO_DATOS_v4.pdf" |  1.2.1  |
+
+
 ## Flujo de Trabajo
 
 1. **Extracción de Datos:**

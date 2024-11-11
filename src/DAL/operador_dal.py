@@ -20,6 +20,12 @@ class OperadorDAL:
             nif_notificacion=row.get('NIF_NOTIFICACION'),
             representante_notificacion=row.get('REPRESENTANTE_NOTIFICACION'),
             email_notificacion=row.get('EMAIL_NOTIFICACION'),
+            servicio_fija= row.get('Servicio_FIJA'),
+            servicio_movil= row.get('Servicio_Movil'),
+            servicio_fwa= row.get('Servicio_FWA'),
+            servicio_movil_virtual= row.get('Servicio_MovilVirtual'),
+            servicio_otros= row.get('Servicio_Otros'),
+            
         )
 
     def get_all_records(self):
@@ -74,8 +80,13 @@ class OperadorDAL:
                 NOMBRE_REPLEGAL,
                 NIF_NOTIFICACION,
                 REPRESENTANTE_NOTIFICACION,
-                EMAIL_NOTIFICACION
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                EMAIL_NOTIFICACION,
+                Servicio_FIJA,
+                Servicio_Movil,
+                Servicio_FWA,
+                Servicio_MovilVirtual,
+                Servicio_Otros
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             '''
             
             # Ejecutar la consulta con los valores del operador
@@ -94,8 +105,13 @@ class OperadorDAL:
                 representate_legal.nombre_completo,
                 operador.nif_notificacion,
                 operador.representante_notificacion,
-                operador.email_notificacion
+                operador.email_notificacion,
                 #representate_legal.email
+                "SI" if operador.servicio_fija else "",
+                "SI" if operador.servicio_movil else "",
+                "SI" if operador.servicio_fwa else "",
+                "SI" if operador.servicio_movil_virtual else "",
+                operador.servicio_otros
             ))
 
             # Confirmar la transacción
@@ -140,7 +156,12 @@ class OperadorDAL:
                 NOMBRE_REPLEGAL = ?,
                 NIF_NOTIFICACION = ?,
                 REPRESENTANTE_NOTIFICACION = ?,
-                EMAIL_NOTIFICACION = ?
+                EMAIL_NOTIFICACION = ?,
+                Servicio_FIJA = ?,
+                Servicio_Movil = ?,
+                Servicio_FWA = ?,
+                Servicio_MovilVirtual = ?,
+                Servicio_Otros = ?
             WHERE
                 NIF_OPERADOR = ?
             '''
@@ -159,6 +180,11 @@ class OperadorDAL:
                 operador.nif_notificacion,
                 operador.representante_notificacion,
                 operador.email_notificacion,
+                "SI" if operador.servicio_fija else "",
+                "SI" if operador.servicio_movil else "",
+                "SI" if operador.servicio_fwa else "",
+                "SI" if operador.servicio_movil_virtual else "",
+                operador.servicio_otros,
                 operador.nif_operador  # Condición para la actualización
             ))
 

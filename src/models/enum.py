@@ -5,6 +5,7 @@ class PDFProcessingStatus(Enum):
     SUCCESS = "Operador insertado exitosamente"
     OPERATOR_EXISTS = "El operador ya existe en la base de datos"
     MISSING_OPERATOR_INFO = "Falta información del operador en el PDF"
+    MISSING_SIGNATURE = "Falta Firma en el PDF"
     INSERTION_ERROR = "Error al insertar el operador"
     REPRESENTATIVE_PROCESSING_ERROR = "Error al procesar un representante"
 
@@ -12,6 +13,7 @@ class PDFProcessingStatus(Enum):
 class Status(Enum):
     SIN_PROCESAR = "SIN PROCESAR"
     LECTURA_PDF_OK = "LECTURA PDF OK"
+    SIN_FIRMA = "PDF SIN FIRMAR"
     LECTURA_PDF_OK_OPERADOR_EXISTE = "LECTURA PDF OK. OPERADOR YA EXISTE"
     PROCESANDO = "PROCESANDO...."
     DATOS_ACTUALIZADOS = "OK. DATOS ACTUALIZADOS"
