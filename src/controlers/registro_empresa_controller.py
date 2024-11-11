@@ -9,8 +9,6 @@ from helpers.NombreApellidosParser import NombreApellidosParser
 from DAL.operador_dal import OperadorDAL
 from DAL.usuario_operador_dal import Usuario_OperadorDAL
 
-from pyhanko.sign.validation import validate_pdf_signature
-from pyhanko.sign.fields import enumerate_sig_fields
 from pyhanko.pdf_utils.reader import PdfFileReader
 
 
